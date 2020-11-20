@@ -13,24 +13,12 @@ public class Item {
         return index;
     }
 
-    public void setIndex(int index) {
-        this.index = index;
-    }
-
     public float getUtility() {
         return utility;
     }
 
-    public void setUtility(float utility) {
-        this.utility = utility;
-    }
-
     public float getWeight() {
         return weight;
-    }
-
-    public void setWeight(float weight) {
-        this.weight = weight;
     }
 
     @Override
