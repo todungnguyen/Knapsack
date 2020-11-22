@@ -132,20 +132,21 @@ public class App {
 
         while (!queue.isEmpty()) {
             current = queue.remove(0);
-            // 4. vérifier les conditions arrêts pour chaque noeud
-                // si UBi < LB
+            // 4. vérifier les conditions arrêts (ne poursuivre pas) pour chaque noeud
+                // si UBi < LB => arrêt
             if (current.getUb() < current.getLb()) {
                 current.setFlag(Flag.UBLTLB);
-                // sinon => Ubi >= LB
+                // sinon <=> Ubi >= LB
             } else {
-                // si le solution est irréalisable
+                // si le solution est irréalisable => arrêt
                 if (isUnachievable(current.getCurrentSolution(), items)) {
                     current.setFlag(Flag.UNACHIEVABLE);
                 }
-                // si les valeurs sont entiers => Ubi est entier
+                // si les valeurs sont entiers => arrêt
                 else if (isInteger(current.getCurrentSolution())) {
                     // c'est une solution admissible
                     current.setFlag(Flag.SOLUTION);
+                    // UBi est entier => LB = UBi
                     current.setLb(current.getUb());
                     // mais il faut vérifier si c'est la solution optimale
                     if (current.getUb() > solutionOptimal.getValue()) {
