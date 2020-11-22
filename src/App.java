@@ -45,26 +45,31 @@ public class App {
         float utility = 0;
         currentSolution = new float[n];
 
-        for (int i = 0; i < finalSolution.length; i++) {
-            // si la valeur de l'objet i est connu (0 ou 1)
+        // si la valeur de l'objet i est connu (0 ou 1)
+        for (Item item : items) {
+            int i = item.getIndex();
             if (finalSolution[i] != -1) {
                 currentSolution[i] = finalSolution[i];
-                weight += items[i].getWeight() * finalSolution[i];
-                utility += items[i].getUtility() * finalSolution[i];
+                weight += item.getWeight() * finalSolution[i];
+                utility += item.getUtility() * finalSolution[i];
+                //System.out.println("current avec " + i + "=" + currentSolution[i] + " weight = " + weight + " utility =" + utility);
             }
         }
 
+        // sinon, continue le calcul avec les objets qu'on a pas encore connu les valeurs
         for (Item item : items) {
-            // continue le calcul avec les objets qu'on a pas encore connu les valeurs
-            if (finalSolution[item.getIndex()] == -1) {
+            int i = item.getIndex();
+            if (finalSolution[i] == -1) {
                 if (weight + item.getWeight() <= B) {
-                    currentSolution[item.getIndex()] = 1;
+                    currentSolution[i] = 1;
                     weight += item.getWeight();
                     utility += item.getUtility();
+                    //System.out.println("complete full current avec " + i + "=" + currentSolution[i] + " weight = " + weight + " utility =" + utility);
                 } else {
-                    currentSolution[item.getIndex()] = (B - weight) / item.getWeight();
+                    currentSolution[i] = (B - weight) / item.getWeight();
                     utility += item.getUtility() * (B - weight) / item.getWeight();
-                    break;
+                    //System.out.println("complete half current avec " + i + "=" + currentSolution[i] + " weight = " + weight + " utility =" + utility);
+                    return utility;
                 }
             }
         }
@@ -99,6 +104,7 @@ public class App {
     // Ajouter un nouveau noeud
     public static void addNode(Node current, Item[] items, ArrayList<Node> queue, int finalValue) {
         finalSolution[xi] = finalValue;
+        // System.out.println("Node " + (current.getLevel() + 1) + " avec " + xi + "=" + finalValue);
         Node node = new Node(current.getLb(), upperBound(items), current.getLevel() + 1, finalSolution, currentSolution);
         queue.add(node);
     }
@@ -139,7 +145,7 @@ public class App {
                 // sinon <=> Ubi >= LB
             } else {
                 // si le solution est irréalisable => arrêt
-                if (isUnachievable(current.getCurrentSolution(), items)) {
+                if (isUnachievable(current.getFinalSolution(), items)) {
                     current.setFlag(Flag.UNACHIEVABLE);
                 }
                 // si les valeurs sont entiers => arrêt
@@ -180,7 +186,7 @@ public class App {
         // J'ai mis des tests différents
         // Vous pouvez les tester ou faire un nouveau fonction de test (qui contient les valeurs de n, B et les objets) comme au-dessous
         // Puis l'appeler ici pour tester
-        test1();
+        test7();
         items = new Item[n];
         for(int i = 0; i < n; i++) {
             items[i] = new Item(i, utilities[i], weights[i]);
@@ -239,7 +245,7 @@ public class App {
         utilities = new float[] {18, 20, 14, 18};
     }
 
-    // 49 (0, 1, 1, 1, 0)
+    // 51 (0, 1, 1, 1, 0)
     public static void test7() {
         n = 5;
         B = 26;
