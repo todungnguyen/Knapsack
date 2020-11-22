@@ -16,7 +16,7 @@ public class Solution {
     @Override
     public String toString() {
         return "Optimal solution{" +
-                "valeur=" + value +
+                "value=" + value +
                 ", solution=" + Arrays.toString(solution) +
                 '}';
     }
