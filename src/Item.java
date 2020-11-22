@@ -1,7 +1,7 @@
 public class Item {
-    private int index;
-    private float utility;
-    private float weight;
+    private final int index;
+    private final float utility;
+    private final float weight;
 
     public Item(int index, float utility, float weight) {
         this.index = index;

@@ -7,7 +7,7 @@ public class App {
     // bag capacity
     private static float B;
     private static float[] currentSolution;
-    private static int[] finalSolution;
+    private static float[] finalSolution;
     private static int xi;
 
     public static float lowerBound(Item[] items) {
@@ -33,12 +33,10 @@ public class App {
         currentSolution = new float[n];
 
         for (int i = 0; i < finalSolution.length; i++) {
-            if (finalSolution[i] == 1) {
-                weight += items[i].getWeight();
-                utility += items[i].getUtility();
-            }
             if (finalSolution[i] != -1) {
                 currentSolution[i] = finalSolution[i];
+                weight += items[i].getWeight() * finalSolution[i];
+                utility += items[i].getUtility() * finalSolution[i];
             }
         }
 
@@ -58,7 +56,7 @@ public class App {
         return utility;
     }
 
-    public static boolean isUnachievable(int[] finalSolution, Item[] items) {
+    public static boolean isUnachievable(float[] finalSolution, Item[] items) {
         float total = 0;
         for (int i = 0; i < finalSolution.length; i++) {
             if (finalSolution[i] == 1) {
@@ -69,68 +67,79 @@ public class App {
                 }
             }
         }
-        return total >= B;
+        return total > B;
     }
 
-    public static boolean isSolution(int[] finalSolution, Item[] items) {
-        for (int j : finalSolution) {
-            if (j == -1) {
+    public static boolean isSolution(Node current) {
+        for (float i : current.getCurrentSolution()) {
+            if (i != 1 && i != 0) {
                 return false;
             }
         }
-        return !isUnachievable(finalSolution, items);
+        return current.getUb() == (int) current.getUb();
     }
 
-    public static Node solve(Item[] items) {
-        Node solution = null;
+    public static void addNode(Node current, Item[] items, ArrayList<Node> queue, int finalValue) {
+        finalSolution[xi] = finalValue;
+        Node node = new Node(current.getLb(), upperBound(items), current.getLevel() + 1, finalSolution, currentSolution);
+        queue.add(node);
+    }
 
-        finalSolution = new int[n];
+    public static Solution solve(Item[] items) {
+        finalSolution = new float[n];
         for (int i = 0; i < n; i++) {
             finalSolution[i] = -1;
         }
 
         Arrays.sort(items, new sortByUtility());
         System.out.println("Array sorted by Utility: " + Arrays.toString(items));
-
         float LB = lowerBound(items);
         System.out.println("A possible admissible solution would be " + Arrays.toString(currentSolution) + " of value " + LB);
+        System.out.println();
+
+        /*********/
+        Solution solution = new Solution(LB, currentSolution);
+        /*********/
 
         Arrays.sort(items, new sortByRatio());
         System.out.println("Array sorted by Ratio: " + Arrays.toString(items));
         System.out.println();
         float UB = upperBound(items);
 
-        Node current = new Node(UB, LB, 0, finalSolution, currentSolution);
+        Node current = new Node(LB, UB, 0, finalSolution, currentSolution);
         ArrayList<Node> queue = new ArrayList<>();
         queue.add(current);
         while (!queue.isEmpty()) {
             current = queue.remove(0);
-            if (isSolution(current.getFinalSolution(), items)) {
-                current.setFlag(Flag.SOLUTION);
-                solution = new Node(current.getUb(), current.getLb(), current.getLevel(), current.getFinalSolution(), current.getCurrentSolution());
-            }
-            if (isUnachievable(current.getFinalSolution(), items)) {
-                current.setFlag(Flag.UNACHIEVABLE);
-            }
+
             if (current.getUb() < current.getLb()) {
                 current.setFlag(Flag.UBLTLB);
+            } else {
+                if (isUnachievable(current.getFinalSolution(), items)) {
+                    current.setFlag(Flag.UNACHIEVABLE);
+                } else if (isSolution(current)) {
+                    if (current.getLb() <= current.getUb()) {
+                        current.setFlag(Flag.SOLUTION);
+                        current.setLb(current.getUb());
+                        if (current.getUb() > solution.getValue()) {
+                            solution = new Solution(current.getUb(), current.getCurrentSolution());
+                        }
+                    }
+                }
             }
+
             System.out.println(current);
 
-            if ((current.getLevel() == 0 || current.getUb() >= current.getLb()) && current.getFlag() == Flag.CONTINUE) {
+            if (current.getFlag() == Flag.CONTINUE) {
                 finalSolution = current.getFinalSolution();
                 for (int i = 0; i < n; i++) {
-                    if (currentSolution[i] != 1.0 && currentSolution[i] != 0.0) {
+                    if (current.getCurrentSolution()[i] != 1.0 && current.getCurrentSolution()[i] != 0.0) {
                         xi = i;
                     }
                 }
-                finalSolution[xi] = 0;
-                Node left = new Node(upperBound(items), current.getLb(), current.getLevel() + 1, finalSolution, currentSolution);
-                queue.add(left);
 
-                finalSolution[xi] = 1;
-                Node right = new Node(upperBound(items), current.getLb(), current.getLevel() + 1, finalSolution, currentSolution);
-                queue.add(right);
+                addNode(current, items, queue, 0);
+                addNode(current, items, queue, 1);
             }
         }
         return solution;
@@ -139,7 +148,7 @@ public class App {
     public static void main(String[] args) {
         System.out.println("KNAPSACK PROBLEM SOLUTION");
         System.out.println();
-        n = 4;
+        n = 4; // 38 (0, 1, 1, 0)
         B = 17;
         // list of item
         Item[] items = new Item[n];
@@ -148,7 +157,7 @@ public class App {
         items[2] = new Item(2, 20, 9);
         items[3] = new Item(3, 11, 6);
 
-        /*n = 5;
+        /*n = 5; // 235 (1, 0, 1, 1, 0)
         B = 10;
         // list of item
         Item[] items = new Item[n];
@@ -158,8 +167,45 @@ public class App {
         items[3] = new Item(3, 95, 5);
         items[4] = new Item(4, 30, 3);*/
 
-        Node solution = solve(items);
+        /*n = 3; // 220 (0, 1, 1)
+        B = 50;
+        // list of item
+        Item[] items = new Item[n];
+        items[0] = new Item(0, 60, 10);
+        items[1] = new Item(1, 100, 20);
+        items[2] = new Item(2, 120, 30);*/
+
+        /*n = 4; // 200 (1, 1, 0, 1)
+        B = 60;
+        // list of item
+        Item[] items = new Item[n];
+        items[0] = new Item(0, 40, 20);
+        items[1] = new Item(1, 100, 10);
+        items[2] = new Item(2, 50, 40);
+        items[3] = new Item(3, 60, 30);*/
+
+        /*n = 6; // 60 (1, 1, 1, 1, 0, 1)
+        B = 60;
+        // list of item
+        Item[] items = new Item[n];
+        items[0] = new Item(0, 2, 10);
+        items[1] = new Item(1, 10, 4);
+        items[2] = new Item(2, 12, 20);
+        items[3] = new Item(3, 18, 24);
+        items[4] = new Item(4, 9, 18);
+        items[5] = new Item(5, 10, 5);*/
+
+        /*n = 4;
+        B = 15;
+        // list of item
+        Item[] items = new Item[n];
+        items[0] = new Item(0, 10, 2);
+        items[1] = new Item(1, 10, 4);
+        items[2] = new Item(2, 12, 6);
+        items[3] = new Item(3, 18, 9);*/
+
+        Solution solution = solve(items);
         System.out.println();
-        System.out.println("OPTIMAL SOLUTION " + Arrays.toString(solution.getFinalSolution()) + " of value " + solution.getUb());
+        System.out.println(solution);
     }
 }
