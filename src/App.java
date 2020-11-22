@@ -56,10 +56,10 @@ public class App {
         return utility;
     }
 
-    public static boolean isUnachievable(float[] finalSolution, Item[] items) {
+    public static boolean isUnachievable(float[] solution, Item[] items) {
         float total = 0;
-        for (int i = 0; i < finalSolution.length; i++) {
-            if (finalSolution[i] == 1) {
+        for (int i = 0; i < solution.length; i++) {
+            if (solution[i] == 1) {
                 for (Item item : items) {
                     if (item.getIndex() == i) {
                         total = total + item.getWeight();
@@ -70,13 +70,14 @@ public class App {
         return total > B;
     }
 
-    public static boolean isSolution(Node current) {
+    // Vérifier si les valeurs sont entiers
+    public static boolean isInteger(Node current) {
         for (float i : current.getCurrentSolution()) {
             if (i != 1 && i != 0) {
                 return false;
             }
         }
-        return current.getUb() == (int) current.getUb();
+        return true;
     }
 
     public static void addNode(Node current, Item[] items, ArrayList<Node> queue, int finalValue) {
@@ -97,9 +98,7 @@ public class App {
         System.out.println("A possible admissible solution would be " + Arrays.toString(currentSolution) + " of value " + LB);
         System.out.println();
 
-        /*********/
         Solution solution = new Solution(LB, currentSolution);
-        /*********/
 
         Arrays.sort(items, new sortByRatio());
         System.out.println("Array sorted by Ratio: " + Arrays.toString(items));
@@ -112,18 +111,20 @@ public class App {
         while (!queue.isEmpty()) {
             current = queue.remove(0);
 
+            // si UBi < LB
             if (current.getUb() < current.getLb()) {
                 current.setFlag(Flag.UBLTLB);
+                // sinon <=> Ubi >= LB
             } else {
-                if (isUnachievable(current.getFinalSolution(), items)) {
+                // si le solution est irréalisable
+                if (isUnachievable(current.getCurrentSolution(), items)) {
                     current.setFlag(Flag.UNACHIEVABLE);
-                } else if (isSolution(current)) {
-                    if (current.getLb() <= current.getUb()) {
-                        current.setFlag(Flag.SOLUTION);
-                        current.setLb(current.getUb());
-                        if (current.getUb() > solution.getValue()) {
-                            solution = new Solution(current.getUb(), current.getCurrentSolution());
-                        }
+                    // si les valeurs sont entiers => Ubi est entier
+                } else if (isInteger(current)) {
+                    current.setFlag(Flag.SOLUTION);
+                    current.setLb(current.getUb());
+                    if (current.getUb() > solution.getValue()) {
+                        solution = new Solution(current.getUb(), current.getCurrentSolution());
                     }
                 }
             }
@@ -148,14 +149,14 @@ public class App {
     public static void main(String[] args) {
         System.out.println("KNAPSACK PROBLEM SOLUTION");
         System.out.println();
-        n = 4; // 38 (0, 1, 1, 0)
+        /*n = 4; // 38 (0, 1, 1, 0)
         B = 17;
         // list of item
         Item[] items = new Item[n];
         items[0] = new Item(0, 8, 3);
         items[1] = new Item(1, 18, 7);
         items[2] = new Item(2, 20, 9);
-        items[3] = new Item(3, 11, 6);
+        items[3] = new Item(3, 11, 6);*/
 
         /*n = 5; // 235 (1, 0, 1, 1, 0)
         B = 10;
@@ -184,7 +185,7 @@ public class App {
         items[2] = new Item(2, 50, 40);
         items[3] = new Item(3, 60, 30);*/
 
-        /*n = 6; // 60 (1, 1, 1, 1, 0, 1)
+        /*n = 6; // 50 (0, 1, 1, 1, 0, 1)
         B = 60;
         // list of item
         Item[] items = new Item[n];
@@ -195,14 +196,23 @@ public class App {
         items[4] = new Item(4, 9, 18);
         items[5] = new Item(5, 10, 5);*/
 
-        /*n = 4;
+        /*n = 4; // 56 (1, 1, 0, 1)
+        B = 21;
+        // list of item
+        Item[] items = new Item[n];
+        items[0] = new Item(0, 18, 6);
+        items[1] = new Item(1, 20, 3);
+        items[2] = new Item(2, 14, 5);
+        items[3] = new Item(3, 18, 9);*/
+
+        n = 4; // 38 (1, 1, 0, 1)
         B = 15;
         // list of item
         Item[] items = new Item[n];
         items[0] = new Item(0, 10, 2);
         items[1] = new Item(1, 10, 4);
         items[2] = new Item(2, 12, 6);
-        items[3] = new Item(3, 18, 9);*/
+        items[3] = new Item(3, 18, 9);
 
         Solution solution = solve(items);
         System.out.println();
