@@ -1,19 +1,19 @@
 import java.util.Arrays;
 
 public class Node {
-    // Level of the node in the decision tree
+    // niveau du noeud dans l'arbbre de décision
     private final int level;
-
+    // solution actuelle
     private final float[] currentSolution;
-
-    // Lower Bound: Worst case (0/1)
-    private float lb;
-
-    // Upper Bound: Best case (Fractional Knapsack)
+    // Upper Bound
     private final float ub;
-
+    // solution final (pour vois quel objet a obtenu un valeur final) (contient que 3 valeur: -1, 0 ou 1)
+    // par exemple: finalSolution[i] = -1 => la valeur de l'objet i n'a pas encore connu
+    // finalSolution[i] = 1 => dans ce noeud, la valeur de l'objet i est 1
     private final float[] finalSolution;
-
+    // Lower Bound
+    private float lb;
+    // état du noeud
     private Flag flag;
 
     public Node(float lb, float ub, int level, float[] finalSolution, float[] currentSolution) {
