@@ -23,10 +23,6 @@ public class Item {
 
     @Override
     public String toString() {
-        return "Item{" +
-                "index=" + index +
-                ", utility=" + utility +
-                ", weight=" + weight +
-                '}';
+        return "{" + index + ", " + utility + ", " + weight + "}";
     }
 }

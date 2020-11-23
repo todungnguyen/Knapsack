@@ -4,11 +4,11 @@ import java.util.Arrays;
 public class App {
     // nombre d'objet (nombre de variable de décision)
     private static int n;
-    // capacité maximum
+    // capacité maximum du sac
     private static float B;
-    // liste de poid
+    // liste de poid (les coefficients de la contraintes)
     private static float[] weights;
-    // liste d'utilité
+    // liste d'utilité (les coefficients objectifs)
     private static float[] utilities;
     // liste d'objet
     private static Item[] items;
@@ -20,6 +20,12 @@ public class App {
     private static float[] finalSolution;
     // variable qui est la plus fractionnaire dans la solution fournie
     private static int xi;
+    // Lower Bound
+    private static float LB;
+
+    public static final String ANSI_RED = "\u001B[31m";
+    public static final String ANSI_GREEN = "\u001B[32m";
+    public static final String ANSI_RESET = "\u001B[0m";
 
     // Déterminer une solution admissible (en entier) à l'aide de Heuristique Gloutonne
     public static float lowerBound(Item[] items) {
@@ -33,7 +39,7 @@ public class App {
                 weight += item.getWeight();
                 utility += item.getUtility();
             } else {
-                break;
+                return utility;
             }
         }
         return utility;
@@ -52,11 +58,10 @@ public class App {
                 currentSolution[i] = finalSolution[i];
                 weight += item.getWeight() * finalSolution[i];
                 utility += item.getUtility() * finalSolution[i];
-                //System.out.println("current avec " + i + "=" + currentSolution[i] + " weight = " + weight + " utility =" + utility);
             }
         }
 
-        // sinon, continue le calcul avec les objets qu'on a pas encore connu les valeurs
+        // sinon, continue le calcul avec les objets qu'on a pas encore connu ses valeurs
         for (Item item : items) {
             int i = item.getIndex();
             if (finalSolution[i] == -1) {
@@ -64,11 +69,9 @@ public class App {
                     currentSolution[i] = 1;
                     weight += item.getWeight();
                     utility += item.getUtility();
-                    //System.out.println("complete full current avec " + i + "=" + currentSolution[i] + " weight = " + weight + " utility =" + utility);
                 } else {
                     currentSolution[i] = (B - weight) / item.getWeight();
-                    utility += item.getUtility() * (B - weight) / item.getWeight();
-                    //System.out.println("complete half current avec " + i + "=" + currentSolution[i] + " weight = " + weight + " utility =" + utility);
+                    utility += item.getUtility() * currentSolution[i];
                     return utility;
                 }
             }
@@ -79,7 +82,7 @@ public class App {
     // Vérifier si la solution est irréalisable
     public static boolean isUnachievable(float[] solution, Item[] items) {
         float total = 0;
-        for (int i = 0; i < solution.length; i++) {
+        for (int i = 0; i < n; i++) {
             if (solution[i] == 1) {
                 for (Item item : items) {
                     if (item.getIndex() == i) {
@@ -94,7 +97,7 @@ public class App {
     // Vérifier si les valeurs de la solution sont entiers
     public static boolean isInteger(float[] solution) {
         for (float i : solution) {
-            if (i != 1 && i != 0) {
+            if (i != (int) i) {
                 return false;
             }
         }
@@ -104,13 +107,14 @@ public class App {
     // Ajouter un nouveau noeud
     public static void addNode(Node current, Item[] items, ArrayList<Node> queue, int finalValue) {
         finalSolution[xi] = finalValue;
-        // System.out.println("Node " + (current.getLevel() + 1) + " avec " + xi + "=" + finalValue);
-        Node node = new Node(current.getLb(), upperBound(items), current.getLevel() + 1, finalSolution, currentSolution);
+        Node node = new Node(upperBound(items), current.getLevel() + 1, finalSolution, currentSolution);
         queue.add(node);
     }
 
     // L'algo de Branch and Bound
-    public static Solution solve(Item[] items) {
+    public static float[] solve(Item[] items) {
+        float[] solutionOptimal = new float[n];
+
         finalSolution = new float[n];
         for (int i = 0; i < n; i++) {
             finalSolution[i] = -1;
@@ -120,27 +124,28 @@ public class App {
             // calculer un LB
         Arrays.sort(items, new sortByUtility());
         System.out.println("Array sorted by Utility: " + Arrays.toString(items));
-        float LB = lowerBound(items);
-        System.out.println("A possible admissible solution would be " + Arrays.toString(currentSolution) + " of value " + LB);
+        LB = lowerBound(items);
+        System.out.println(ANSI_RED + "A possible admissible solution would be " + Arrays.toString(currentSolution) + " of value " + LB + ANSI_RESET);
         System.out.println();
-        Solution solutionOptimal = new Solution(LB, currentSolution);
+        solutionOptimal = currentSolution;
 
             // calculer un UB
         Arrays.sort(items, new sortByRatio());
         System.out.println("Array sorted by Ratio: " + Arrays.toString(items));
-        System.out.println();
         float UB = upperBound(items);
+        System.out.println();
 
         // construire l'arbre
-        Node current = new Node(LB, UB, 0, finalSolution, currentSolution);
+        Node current = new Node(UB, 0, finalSolution, currentSolution);
         ArrayList<Node> queue = new ArrayList<>();
         queue.add(current);
 
         while (!queue.isEmpty()) {
             current = queue.remove(0);
-            // 4. vérifier les conditions arrêts (ne poursuivre pas) pour chaque noeud
+            System.out.println(ANSI_GREEN + "Node level " + current.getLevel() + ":" + ANSI_RESET);
+            // 4. vérifier les conditions arrêts pour chaque noeud ( <=> ne poursuivre pas sur ce noeud )
                 // si UBi < LB => arrêt
-            if (current.getUb() < current.getLb()) {
+            if (current.getUb() < LB) {
                 current.setFlag(Flag.UBLTLB);
                 // sinon <=> Ubi >= LB
             } else {
@@ -148,15 +153,16 @@ public class App {
                 if (isUnachievable(current.getFinalSolution(), items)) {
                     current.setFlag(Flag.UNACHIEVABLE);
                 }
-                // si les valeurs sont entiers => arrêt
-                else if (isInteger(current.getCurrentSolution())) {
-                    // c'est une solution admissible
-                    current.setFlag(Flag.SOLUTION);
-                    // UBi est entier => LB = UBi
-                    current.setLb(current.getUb());
-                    // mais il faut vérifier si c'est la solution optimale
-                    if (current.getUb() > solutionOptimal.getValue()) {
-                        solutionOptimal = new Solution(current.getUb(), current.getCurrentSolution());
+                else {
+                    // si les valeurs de la solution actuelle sont entiers => arrêt
+                    if (isInteger(current.getCurrentSolution())) {
+                        current.setFlag(Flag.SOLUTION);
+                        // si LB < UBi alors LB = UBi
+                        if (LB < current.getUb()) {
+                            System.out.println(ANSI_RED + "Update LB from " + LB + " to " + current.getUb() + ANSI_RESET);
+                            LB = current.getUb();
+                            solutionOptimal = current.getCurrentSolution();
+                        }
                     }
                 }
             }
@@ -165,9 +171,9 @@ public class App {
 
             if (current.getFlag() == Flag.CONTINUE) {
                 finalSolution = current.getFinalSolution();
-                // 2. chosir une variable xi qui est le plus fractionnaire dans la solution fournie par continue
+                // 2. choisir une variable xi qui est le plus fractionnaire dans la solution fournie par continue
                 for (int i = 0; i < n; i++) {
-                    if (current.getCurrentSolution()[i] != 1.0 && current.getCurrentSolution()[i] != 0.0) {
+                    if (current.getCurrentSolution()[i] != (int) current.getCurrentSolution()[i] ) {
                         xi = i;
                     }
                 }
@@ -180,21 +186,22 @@ public class App {
     }
 
     public static void main(String[] args) {
-        System.out.println("KNAPSACK PROBLEM SOLUTION");
+        System.out.println(ANSI_RED + "KNAPSACK PROBLEM SOLUTION" + ANSI_RESET);
         System.out.println();
 
         // J'ai mis des tests différents
-        // Vous pouvez les tester ou faire un nouveau fonction de test (qui contient les valeurs de n, B et les objets) comme au-dessous
+        // Vous pouvez les tester ou faire un nouveau fonction de test comme au-dessous
         // Puis l'appeler ici pour tester
-        test7();
+        test1();
+
         items = new Item[n];
         for(int i = 0; i < n; i++) {
             items[i] = new Item(i, utilities[i], weights[i]);
         }
-        Solution solution = solve(items);
 
+        float[] solution = solve(items);
         System.out.println();
-        System.out.println(solution);
+        System.out.println(ANSI_RED + "OPTIMAL SOLUTION: value = " + LB + ", solution = " + Arrays.toString(solution) + ANSI_RESET);
     }
 
     // 38 (0, 1, 1, 0)

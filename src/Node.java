@@ -1,24 +1,21 @@
 import java.util.Arrays;
 
 public class Node {
-    // niveau du noeud dans l'arbbre de décision
+    // niveau du noeud dans l'arbre de décision
     private final int level;
     // solution actuelle
     private final float[] currentSolution;
     // Upper Bound
     private final float ub;
-    // solution final (pour vois quel objet a obtenu un valeur final) (contient que 3 valeur: -1, 0 ou 1)
+    // solution final (pour vois quel objet a obtenu un valeur final) (ne contient que 3 valeur: -1, 0 ou 1)
     // par exemple: finalSolution[i] = -1 => la valeur de l'objet i n'a pas encore connu
     // finalSolution[i] = 1 => dans ce noeud, la valeur de l'objet i est 1
     private final float[] finalSolution;
-    // Lower Bound
-    private float lb;
     // état du noeud
     private Flag flag;
 
-    public Node(float lb, float ub, int level, float[] finalSolution, float[] currentSolution) {
+    public Node(float ub, int level, float[] finalSolution, float[] currentSolution) {
         this.ub = ub;
-        this.lb = lb;
         this.level = level;
         this.finalSolution = new float[finalSolution.length];
         System.arraycopy(finalSolution, 0, this.finalSolution, 0, finalSolution.length);
@@ -29,14 +26,6 @@ public class Node {
 
     public float getUb() {
         return ub;
-    }
-
-    public float getLb() {
-        return lb;
-    }
-
-    public void setLb(float lb) {
-        this.lb = lb;
     }
 
     public int getLevel() {
@@ -61,13 +50,9 @@ public class Node {
 
     @Override
     public String toString() {
-        return "Node{" +
-                "level=" + level +
-                ", currentSolution=" + Arrays.toString(currentSolution) +
-                ", lb=" + lb +
+        return "currentSolution=" + Arrays.toString(currentSolution) +
                 ", ub=" + ub +
                 ", finalSolution=" + Arrays.toString(finalSolution) +
-                ", flag=" + flag +
-                '}';
+                ", flag=" + flag;
     }
 }
