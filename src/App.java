@@ -236,24 +236,8 @@ public class App {
         utilities = new float[] {40, 100, 50, 60};
     }
 
-    // 50 (0, 1, 1, 1, 0, 1)
-    public static void test5() {
-        n = 6;
-        B = 60;
-        weights = new float[] {10, 4, 20, 24, 18, 5};
-        utilities = new float[] {2, 10, 12, 18, 9, 10};
-    }
-
-    // 56 (1, 1, 0, 1)
-    public static void test6() {
-        n = 4;
-        B = 21;
-        weights = new float[] {6, 3, 5, 9};
-        utilities = new float[] {18, 20, 14, 18};
-    }
-
     // 51 (0, 1, 1, 1, 0)
-    public static void test7() {
+    public static void test5() {
         n = 5;
         B = 26;
         weights = new float[] {12, 7, 11, 8, 9};
