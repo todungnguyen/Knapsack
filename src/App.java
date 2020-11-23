@@ -190,7 +190,7 @@ public class App {
         System.out.println();
 
         // J'ai mis des tests différents
-        // Vous pouvez les tester ou faire un nouveau fonction de test comme au-dessous
+        // Vous pouvez les tester ou faire un nouveau fonction de test comme au-dessous (ou bien mettre directement les codes ici)
         // Puis l'appeler ici pour tester
         test1();
 
